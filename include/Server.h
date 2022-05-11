@@ -1,31 +1,41 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#pragma once
+#include <netinet/in.h>
 
+#pragma once
 class Server {
    public:
-    Server(int);
+    Server(int, int);  // : IP_VERSION(), IP_STRING_LENGTH(){};
     ~Server();
 
     // setters
-    void setDomain(int);
     void setConnectionType(const char *);
     void setPort(int);
+    int getIpStringLength(int);
+    void handleClients();
 
    private:
-    int domain;
-    int connectionType;
+    int connection_type;
     int port;
-    int socketDescriptor;
+    int socket_fd;
+    struct sockaddr_in socket_address;
 
+    const int IP_VERSION;
+    const int IP_STRING_LENGTH;
+    const int ADDRESS_FAMILY = AF_INET;
     const int PROTOCOL = 0;
+    const int ALLOWED_IP = INADDR_ANY;
     const int BACKLOG_QUEUE_SIZE = 1;
 
     void createSocket();
     void setSocketOptions();
     void bindSocket();
     void startListening();
+    void grabConnection();
+
+    void setIpVersion(int);
+    void setIpStringLength(int);
 };
 
 #endif

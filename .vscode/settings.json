@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "mutex": "cpp",
+        "new": "cpp",
+        "streambuf": "cpp",
+        "functional": "cpp",
+        "typeinfo": "cpp",
+        "stdexcept": "cpp",
+        "*.tcc": "cpp",
+        "iostream": "cpp",
+        "iosfwd": "cpp"
+    }
+}
