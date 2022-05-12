@@ -9,12 +9,16 @@
 #include <iostream>
 
 #include "GlobalVariables.h"
+#include "Config.h"
 #include "stdlib.h"
 
 using namespace std;
 
 Server::Server(int ip_version, int port) : IP_VERSION(ip_version),
                                            IP_STRING_LENGTH(getIpStringLength(ip_version)) {
+    Config<User> usersData("users.csv");
+    users = usersData.read();
+
     setConnectionType("TCP");
     setPort(port);
 

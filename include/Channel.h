@@ -5,6 +5,7 @@
 
 class Channel {
    public:
+    Channel();
     Channel(unsigned int);
     ~Channel();
 
@@ -13,6 +14,7 @@ class Channel {
 
    private:
     const unsigned int ID;
+    static unsigned int id_counter;
 };
 
 #endif

@@ -15,16 +15,21 @@ class Config {
     Config(string);
     ~Config();
 
-    vector<T> read();
+    vector<T> * read();
     void write(vector<T> *);
 
    private:
     string filename;
     fstream file;
-
     vector<T> *objects;
 
+    enum ClassType { USER, SERVER, CHANNEL };
+    ClassType class_type;
+
     void writeUsers();
+    void readUsers();
 };
+
+#include "../src/Config.cpp"
 
 #endif

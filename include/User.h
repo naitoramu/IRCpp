@@ -12,8 +12,14 @@ using namespace std;
 
 class User {
    public:
-    User(string, string, vector<Channel> *);
+    User(string, string, vector<unsigned int> *);
+    User();
     ~User();
+
+    // setters
+    void setUsername(string);
+    void setPassword(string);
+    void setChannels(vector<unsigned int> *);
 
     // getters
 
@@ -25,7 +31,7 @@ class User {
         return password;
     }
 
-    vector<Channel> *getChannels() {
+    vector<unsigned int> * getChannels() {
         return channels;
     }
 
@@ -35,7 +41,7 @@ class User {
     string username;
     string hostname;
 
-    vector<Channel> *channels;
+    vector<unsigned int> *channels;
 };
 
 #endif

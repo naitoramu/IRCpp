@@ -2,6 +2,9 @@
 #define SERVER_H
 
 #include <netinet/in.h>
+#include <vector>
+
+#include "User.h"
 
 #pragma once
 class Server {
@@ -20,6 +23,8 @@ class Server {
     int port;
     int socket_fd;
     struct sockaddr_in socket_address;
+
+    vector<User> *users;
 
     const int IP_VERSION;
     const int IP_STRING_LENGTH;
