@@ -1,158 +1,115 @@
-#include "Server.h"
+#include "Server.hpp"
+#include "Message.hpp"
 
 #include <arpa/inet.h>
-#include <fcntl.h>
-#include <string.h>
-#include <sys/poll.h>
-#include <sys/socket.h>
+#include <cstring>
 
 #include <iostream>
 
-#include "GlobalVariables.h"
-#include "Config.h"
-#include "stdlib.h"
-
 using namespace std;
 
-Server::Server(int ip_version, int port) : IP_VERSION(ip_version),
-                                           IP_STRING_LENGTH(getIpStringLength(ip_version)) {
-    Config<User> usersData("users.csv");
-    users = usersData.read();
+Server::Server(int port) {
 
-    setConnectionType("TCP");
-    setPort(port);
-
-    createSocket();
-    setSocketOptions();
-    bindSocket();
-    startListening();
-}
-
-Server::~Server() {
-}
-
-void Server::createSocket() {
-    if (ADDRESS_FAMILY && connection_type && port) {
-        socket_fd = socket(ADDRESS_FAMILY, connection_type, PROTOCOL);
-
-        if (socket_fd == -1) {
-            cerr << "Failed to create socket. Error: " << strerror(errno) << endl;
-            exit(EXIT_FAILURE);
-        }
-
-        if (DEBUG_MODE) {
-            cout << "socket(" << ADDRESS_FAMILY << ", " << connection_type << ", " << PROTOCOL << ");" << endl;
-        }
-    } else {
-        cerr << "NULL pointer: ADDRESS_FAMILY or connection_type or port is NULL" << endl;
-    }
-}
-
-void Server::setSocketOptions() {
-    const int trueFlag = 1;
-
-    int status = setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &trueFlag, sizeof(int));
-
-    if (status < 0) {
-        cerr << "Setsockopt failed. Error: " << strerror(errno) << endl;
-        exit(EXIT_FAILURE);
-    }
-}
-
-void Server::bindSocket() {
-    socket_address.sin_family = ADDRESS_FAMILY;
-    socket_address.sin_addr.s_addr = ALLOWED_IP;
-    socket_address.sin_port = htons(port);
-
-    int status = bind(socket_fd, (struct sockaddr*)&socket_address, sizeof(socket_address));
-
-    if (status < 0) {
-        cerr << "Failed to bind to port '" << port << "'. Error: " << strerror(errno) << endl;
-        exit(EXIT_FAILURE);
-    }
-}
-
-void Server::startListening() {
-    int status;
-    status = listen(socket_fd, BACKLOG_QUEUE_SIZE);
-
-    if (status < 0) {
-        cerr << "Failed to listen on socket. Error: " << strerror(errno) << endl;
-        exit(EXIT_FAILURE);
-    }
-
-    fcntl(socket_fd, F_SETFL, O_NONBLOCK);  // marking socket as nonblocking
-}
-
-void Server::handleClients() {
-    grabConnection();
+    socket = new Socket(port);
+    socket->startListening();
 }
 
 void Server::grabConnection() {
-    size_t address_length = sizeof(socket_address);
-    int client_socket_fd = accept(socket_fd, (struct sockaddr*)&socket_address, (socklen_t*)&address_length);
+    size_t address_length = sizeof(socket->getSockAddrIn());
+    int client_socket_fd = accept(socket->getFileDescriptor(), (struct sockaddr*)socket->getSockAddrIn(), (socklen_t*)&address_length);
 
-    if (client_socket_fd < 0) {
-        // cerr << "Failed to accept connection. Error: " << strerror(errno) << endl;
-
-    } else {
+    if (client_socket_fd >= 0) {
         char client_ip[IP_STRING_LENGTH];
-        inet_ntop(ADDRESS_FAMILY, &(socket_address.sin_addr), client_ip, IP_STRING_LENGTH);
 
-        if (DEBUG_MODE) {
-            cout << "Server: Connection from: " << client_ip << endl;
-        }
+        inet_ntop(socket->getAddressFamily(), socket->getInAddr(), client_ip, IP_STRING_LENGTH);
 
-        struct pollfd poll_fd;
+        cout << "Server: Connection from: " << client_ip << endl;
+
+        pollfd poll_fd{};
         poll_fd.fd = client_socket_fd;
         poll_fd.events = POLLIN;
         poll_fd.revents = 0;
+
+        cout << "Connected fd: " << poll_fd.fd << endl;
+        unique_ptr<User> new_user = make_unique<User>(poll_fd);
+        connected_users.push_back(move(new_user));
+        connected_fds.push_back(poll_fd);
+        cout << "FD:" << connected_users.at(0)->poll_fd.fd << endl;
     }
+//    for (auto & connected_user : connected_users) {
+//    }
+
+    // cout << "Connected users count: " << connected_fds.size() << endl;
+}
+
+void Server::handleClients() {
+
+    int readable_descriptors = poll(connected_fds.data(), connected_fds.size(), INACTIVITY_TIMEOUT);
+
+    char buffer[1024];
+    const int trueFlag = 0;
+
+    if (readable_descriptors > 0) {
+        for (pollfd poll_fd : connected_fds) {
+            if (poll_fd.revents & POLLIN) {
+                int received_value = recv(poll_fd.fd, buffer, sizeof(buffer), trueFlag);
+
+                if (received_value < 0) {
+                    if (errno != EWOULDBLOCK) {
+                        cerr << "Error while reading. Error:" << strerror(errno) << endl;
+                    }
+
+                } else if (received_value == 0) {
+                    cerr << "Conection closed by client" << endl;
+
+                } else {
+
+                    cout << "Received " << received_value << " bytes from fd: " << poll_fd.fd << endl;
+
+                    auto *message = new  Message(buffer);
+                    User *user = getUserByFD(poll_fd.fd);
+                    message->displayParsedMessage();
+                    user->handleMessage(message);
+
+                    delete message;
+                }
+
+                poll_fd.revents = 0;
+                memset(buffer, 0, sizeof(buffer));
+            }
+        }
+    }
+}
+
+bool Server::isValidCommand(string command) {
+
+    if (command.at(0) == '/') {
+        command = command.substr(1);
+    }
+
+    for (const string& available_command : available_commands) {
+        if (command == available_command) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 // getters
 
-int Server::getIpStringLength(int version) {
-    if (version == 4) {
-        return INET_ADDRSTRLEN;
+User * Server::getUserByFD(int file_descriptor) {
+    cout << "Connected users: " << connected_users.size() << endl;
 
-    } else if (version == 6) {
-        return INET6_ADDRSTRLEN;
-
-    } else {
-        cerr << "Invalid ip version :" << version << endl;
-        exit(EXIT_FAILURE);
+    for (auto & connected_user : connected_users) {
+        cout << "user.poll_fd.fd = " << connected_user->poll_fd.fd << endl;
+        if (connected_user->poll_fd.fd == file_descriptor) { return connected_user.get(); }
     }
+
+    cerr << "Cannot find user with fd == " << file_descriptor << endl;
+    exit(EXIT_FAILURE);
 }
 
-// setters
-
-void Server::setPort(int port) {
-    if (port < 1024 || port > 49151) {
-        cerr << "Invalid port number: " << port << endl;
-        cerr << "Available range: 1024 - 49151" << endl;
-        exit(EXIT_FAILURE);
-
-    } else {
-        this->port = port;
-    }
-}
-
-void Server::setConnectionType(const char* connectionType) {
-    if (!strcmp(connectionType, "TCP")) {
-        this->connection_type = SOCK_STREAM;
-        if (DEBUG_MODE) {
-            cout << "TCP selected" << endl;
-        }
-
-    } else if (!strcmp(connectionType, "UDP")) {
-        this->connection_type = SOCK_DGRAM;
-        if (DEBUG_MODE) {
-            cout << "UDP selected" << endl;
-        }
-
-    } else {
-        cerr << "Invalid type for connection: " << connectionType << endl;
-        exit(EXIT_FAILURE);
-    }
+Server::~Server() {
+    delete socket;
 }

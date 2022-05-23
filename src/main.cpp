@@ -1,53 +1,42 @@
 #include <csignal>
 #include <iostream>
 
-#include "Config.cpp"
-#include "Server.h"
-#include "User.h"
+#include "Server.hpp"
 
 bool working = true;
-unsigned int Channel::id_counter = 5;
 
 void sigHandler(int signum) {
-    (void)signum;
+    (void) signum;
     working = false;
 }
 
-int main(int argc, char *argv[]) {
+vector<string> defineAvailableCommands() {
+    vector<string> available_commands;
 
-    // vector<unsigned int> channels;
-    // channels.push_back(1);
-    // channels.push_back(2);
+    available_commands.emplace_back("HELLO");
+    available_commands.emplace_back("JOIN");
+    available_commands.emplace_back("LEAVE");
+    available_commands.emplace_back("QUIT");
+    available_commands.emplace_back("HELP");
+    available_commands.emplace_back("WHO");
+    available_commands.emplace_back("LIST");
 
-    // vector<unsigned int> channels2;
-    // channels2.push_back(3);
-    // channels2.push_back(4);
-    // channels2.push_back(5);
+    return available_commands;
+}
 
-    // vector<User> users;
-    // users.push_back(User("maruś", "haslo123", &channels));
-    // users.push_back(User("czaruś", "silnehaslo", &channels2));
+vector<string> Server::available_commands = defineAvailableCommands();
+unsigned int User::id_counter = 1;
 
-    // vector<User> * users;
-    // Config<User> config("users.csv");
-    // config.write(&users);
-    // users = config.read();
-
-    // for (User user : *users) {
-    //     cout << user.getUsername() << ',' << user.getPassword() << endl;
-    //     // cout << user.getChannels() << endl;
-    //     for (unsigned int channel_id : *(user.getChannels())) {
-    //         cout << channel_id << ',';
-    //     }
-
-    //     cout << endl;
-    // }
-    Server server = Server(4, 2137);
+int
+main(int argc, char *argv[]) {
+    Server server(2137);
 
     signal(SIGINT, sigHandler);
+    while (working) {
+        // system("clear");
 
-    while(working) {
-    	server.handleClients();
+        server.grabConnection();
+        server.handleClients();
     }
 
     std::cout << "Done" << std::endl;
