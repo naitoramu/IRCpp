@@ -1,20 +1,24 @@
 #pragma once
 
 #include <string>
+#include "Server.hpp"
 
 using namespace std;
 
 class User;
+class Server;
 
 class CommandHandler {
 public:
-    CommandHandler(User *);
+    CommandHandler(Server *);
+
     ~CommandHandler();
 
-    void handle(const string&, const string&);
+    void handleMessage(Message *, User *);
 
 private:
     User *user;
+    Server *server;
 
     const string HELLO_RESPONSE = "Welcome on IRCpp server\n"
                                   "To start chatting join a channel\n"
@@ -27,8 +31,14 @@ private:
                                  "WHO                       list online users on server\n"
                                  "WHO <#channel>            list online users on chosen channel\n"
                                  "QUIT                      quit from server\n";
-    void hello();
-    void pass(const string&);
 
+    void handleCommand(const string&, const string&);
+    void sendResponse(const string&);
+
+    void hello();
+    void nick(const string &);
+    void pass(const string &);
+    void who(string);
     void help();
+
 };

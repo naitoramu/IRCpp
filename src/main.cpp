@@ -20,6 +20,7 @@ vector<string> defineAvailableCommands() {
     available_commands.emplace_back("HELP");
     available_commands.emplace_back("WHO");
     available_commands.emplace_back("LIST");
+    available_commands.emplace_back("NICK");
 
     return available_commands;
 }

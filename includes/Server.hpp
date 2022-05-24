@@ -7,6 +7,7 @@
 
 #include "Socket.hpp"
 #include "User.hpp"
+#include "CommandHandler.hpp"
 
 using namespace std;
 
@@ -18,11 +19,14 @@ public:
     void grabConnection();
     void handleClients();
 
+    string getConnectedToServerUserNicknames();
+
     static vector<string> available_commands;
     static bool isValidCommand(string);
 
 private:
     Socket *socket;
+    CommandHandler *command_handler;
     vector<pollfd> connected_fds;
     vector<unique_ptr<User>> connected_users;
 
