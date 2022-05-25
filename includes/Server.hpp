@@ -32,6 +32,8 @@ public:
 
     string getChannelNames();
 
+    vector<int> *getUserOnChannelFileDescriptors(const string &);
+
 private:
     Socket *socket;
     Message *message;

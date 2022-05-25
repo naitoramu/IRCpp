@@ -140,6 +140,17 @@ string Server::getChannelNames() {
     return channel_names;
 }
 
+vector<int> *Server::getUserOnChannelFileDescriptors(const string &channel_name) {
+    vector<int> *file_descriptors = new vector<int>;
+
+    for(unique_ptr<User> &user : connected_users) {
+        if (user->getCurrentChannel() == channel_name) {
+            file_descriptors->push_back(user->poll_fd.fd);
+        }
+    }
+    return file_descriptors;
+}
+
 User * Server::getUserByFD(int file_descriptor) {
     cout << "Connected users: " << connected_users.size() << endl;
 

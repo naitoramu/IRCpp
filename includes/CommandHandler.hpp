@@ -39,6 +39,7 @@ private:
     void defineAvailableCommands();
     void handleCommand(const string&, string&);
     void sendResponse();
+    void sendResponse(int &);
 
     void hello();
     void nick(const string &);
@@ -51,4 +52,6 @@ private:
     void leave();
 
     void list();
+
+    void forwardMessageToUsersOnSameChannel(const string &, const string &);
 };

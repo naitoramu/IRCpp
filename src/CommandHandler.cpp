@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 
 #include <iostream>
+#include <cstring>
 
 // #include "utils.h"
 
@@ -84,8 +85,12 @@ void CommandHandler::nick(const string &nickname) {
     if (nickname.empty()) {
         response = "Invalid nickname\n";
     } else {
-        user->setNickname(nickname);
-        response = "Your nickname set to: " + nickname + "\n";
+        if (user->getNickname().empty()) {
+            user->setNickname(nickname);
+        } else {
+            response = "Nickname already set\n";
+        }
+        response = response + "Your nickname: " + user->getNickname() + "\n";
     }
 
     sendResponse();
@@ -110,7 +115,7 @@ void CommandHandler::join(string &channel_name) {
     } else {
         if (server->doesChannelExists(channel_name)) {
             user->joinChannel(const_cast<string &>(channel_name));
-            response = "Joined to channel " + channel_name + "\n";
+            response = "\n\n\n\n\n\nJoined to channel " + channel_name + "\n";
 
         } else {
             response = "Channel " + channel_name + " does not exist\n";
@@ -170,13 +175,45 @@ void CommandHandler::sendResponse() {
                           response.length(),
                           0);
     if (send_value < 0) {
-        cerr << "Error while responding to user:" << user->getID() << endl;
+        cerr << "Error while sending:" << strerror(errno) << endl;
+    }
+
+    response = "";
+}
+
+void CommandHandler::sendResponse(int &file_descriptor) {
+    int send_value = send(file_descriptor,
+                          response.c_str(),
+                          response.length(),
+                          0);
+    if (send_value < 0) {
+        cerr << "Error while sending:" << strerror(errno) << endl;
     }
 
     response = "";
 }
 
 void CommandHandler::pass(const string& text) {
+    if (user->isConnectedToChannel()) {
+        forwardMessageToUsersOnSameChannel(user->getCurrentChannel(), text);
+    } else {
+        response = "Invalid command\n"
+                   "To send messages you need to join channel\n"
+                   "To list available channels type 'LIST'\n";
+    }
+}
+
+void CommandHandler::forwardMessageToUsersOnSameChannel(const string &channel_name, const string& text) {
+    response = user->getNickname() +": " + text;
+
+    vector<int> *file_descriptors = server->getUserOnChannelFileDescriptors(channel_name);
+
+    for (int file_descriptor : *file_descriptors) {
+        if (file_descriptor != user->poll_fd.fd) {
+            sendResponse(file_descriptor);
+        }
+    }
+    delete file_descriptors;
 }
 
 bool CommandHandler::isValidCommand(string &command) {
