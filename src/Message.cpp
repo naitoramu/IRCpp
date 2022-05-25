@@ -5,18 +5,25 @@
 #include <iostream>
 #include <utility>
 
-Message::Message(string message) {
-    this->message = std::move(message);
+Message::Message(CommandHandler *command_handler) {
+    this->command_handler = command_handler;
+}
+
+void Message::parseMessage(string message) {
+    this->message = message;
+//    cout << "Message: " << message << endl;
 
     processMessage();
 }
 
 void Message::processMessage() {
     splitMessageByLines();
-    parseMessage();
+    parse();
 }
 
 void Message::splitMessageByLines() {
+
+    splitted_message.clear();
     stringstream ss(message);
     string line;
 
@@ -26,9 +33,10 @@ void Message::splitMessageByLines() {
 
 }
 
-void Message::parseMessage() {
+void Message::parse() {
+    parsed_message.clear();
     parsedLine parsed_line;
-    for (const string& line : splitted_message) {
+    for (string& line : splitted_message) {
         parsed_line.command.clear();
         parsed_line.text.clear();
         if (!line.empty()) {
@@ -39,7 +47,7 @@ void Message::parseMessage() {
                 string first_word = line.substr(0, pos);
                 string rest = line.substr(pos + 1);
 
-                if (Server::isValidCommand(first_word)) {
+                if (command_handler->isValidCommand(first_word)) {
                     parsed_line.command = first_word;
                     parsed_line.text = rest;
 
@@ -47,7 +55,7 @@ void Message::parseMessage() {
                     parsed_line.text = line;
 
                 }
-            } else if (Server::isValidCommand(line)) {
+            } else if (command_handler->isValidCommand(line)) {
                 parsed_line.command = line;
             } else {
                 parsed_line.text = line;

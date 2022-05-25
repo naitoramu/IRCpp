@@ -10,22 +10,24 @@
 
 using namespace std;
 
+class Message;
 class CommandHandler;
 
 class User {
 public:
     pollfd poll_fd{};
 
-    User(pollfd);
+    explicit User(pollfd);
     ~User();
 
     unsigned int getID() const;
     string getNickname();
 
     void setNickname(string);
+    void joinChannel(string &);
+    void leaveChannel();
 
-    void handleMessage(Message *);
-    void handleCommand(string, string);
+    bool isConnectedToChannel();
 
     static unsigned int id_counter;
 
@@ -33,10 +35,9 @@ private:
     const unsigned int ID;
 
     string nickname = "";
-    bool connected_to_channel{};
-    string joined_channel_id;
+    bool connected_to_channel = false;
+    string current_channel = "NULL";
+public:
+    const string &getCurrentChannel() const;
 
-//    unique_ptr<CommandHandler> command_handler;
-
-    // const string USERNAME;
 };

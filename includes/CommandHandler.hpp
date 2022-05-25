@@ -7,6 +7,7 @@ using namespace std;
 
 class User;
 class Server;
+class Message;
 
 class CommandHandler {
 public:
@@ -15,10 +16,13 @@ public:
     ~CommandHandler();
 
     void handleMessage(Message *, User *);
+    bool isValidCommand(string&);
 
 private:
     User *user;
     Server *server;
+    string response;
+    vector<string> available_commands;
 
     const string HELLO_RESPONSE = "Welcome on IRCpp server\n"
                                   "To start chatting join a channel\n"
@@ -32,8 +36,9 @@ private:
                                  "WHO <#channel>            list online users on chosen channel\n"
                                  "QUIT                      quit from server\n";
 
-    void handleCommand(const string&, const string&);
-    void sendResponse(const string&);
+    void defineAvailableCommands();
+    void handleCommand(const string&, string&);
+    void sendResponse();
 
     void hello();
     void nick(const string &);
@@ -41,4 +46,9 @@ private:
     void who(string);
     void help();
 
+    void join(string &);
+
+    void leave();
+
+    void list();
 };

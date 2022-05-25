@@ -3,6 +3,7 @@
 
 #include <arpa/inet.h>
 #include <cstring>
+#include <algorithm>
 
 #include <iostream>
 
@@ -14,6 +15,18 @@ Server::Server(int port) {
     socket->startListening();
 
     command_handler = new CommandHandler(this);
+
+    message = new Message(command_handler);
+
+    defineChannels();
+}
+
+void Server::defineChannels() {
+    channels.emplace_back("#channel1");
+    channels.emplace_back("#channel2");
+    channels.emplace_back("#channel3");
+    channels.emplace_back("#channel4");
+    channels.emplace_back("#channel5");
 }
 
 void Server::grabConnection() {
@@ -62,22 +75,22 @@ void Server::handleClients() {
                 if (received_value < 0) {
                     if (errno != EWOULDBLOCK) {
                         cerr << "Error while reading. Error:" << strerror(errno) << endl;
+
                     }
 
                 } else if (received_value == 0) {
                     cerr << "Conection closed by client" << endl;
-
+                    removeDissconnectedClient(poll_fd.fd);
                 } else {
 
                     cout << "Received " << received_value << " bytes from fd: " << poll_fd.fd << endl;
 
-                    auto *message = new  Message(buffer);
+                    message->parseMessage(buffer);
                     User *user = getUserByFD(poll_fd.fd);
                     message->displayParsedMessage();
 //                    user->handleMessage(message);
                     command_handler->handleMessage(message, user);
-
-                    delete message;
+//                    cout << buffer << endl;
                 }
 
                 poll_fd.revents = 0;
@@ -85,21 +98,6 @@ void Server::handleClients() {
             }
         }
     }
-}
-
-bool Server::isValidCommand(string command) {
-
-    if (command.at(0) == '/') {
-        command = command.substr(1);
-    }
-
-    for (const string& available_command : available_commands) {
-        if (command == available_command) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 // getters
@@ -118,6 +116,30 @@ string Server::getConnectedToServerUserNicknames() {
     return nicknames;
 }
 
+string Server::getConnectedToChannelUserNickames(const string &channel_name) {
+    string nicknames;
+
+    for (auto & connected_user : connected_users) {
+        if (connected_user->getCurrentChannel() == channel_name) {
+            nicknames += (connected_user->getNickname() + '\n');
+        }
+    }
+
+    if(nicknames.empty()) {
+        return "This channel is empty";
+    }
+
+    return nicknames;
+}
+
+string Server::getChannelNames() {
+    string channel_names;
+    for(string &channel_name : channels) {
+        channel_names += channel_name + "\n";
+    }
+    return channel_names;
+}
+
 User * Server::getUserByFD(int file_descriptor) {
     cout << "Connected users: " << connected_users.size() << endl;
 
@@ -130,6 +152,43 @@ User * Server::getUserByFD(int file_descriptor) {
     exit(EXIT_FAILURE);
 }
 
+void Server::removeDissconnectedClient(int & fd) {
+    removeDisconnectedFileDescriptor(fd);
+    removeDisconnectedUser(fd);
+}
+
+void Server::removeDisconnectedFileDescriptor(int &fd) {
+    for (int i = 0; i < connected_fds.size(); i++) {
+        if (connected_fds[i].fd == fd) {
+            connected_fds.erase(next(connected_fds.begin(), i));
+            cout << "Disconnected file descriptor removed" << endl;
+            break;
+        }
+    }
+    cerr << "Specified file descriptor '" << fd << "' not found" << endl;
+}
+
+void Server::removeDisconnectedUser(int &fd) {
+    for (int i = 0; i < connected_users.size(); i++) {
+        if (connected_users[i]->poll_fd.fd == fd) {
+            connected_users.erase(next(connected_users.begin(), i));
+            cout << "Disconnected file descriptor removed" << endl;
+            break;
+        }
+    }
+    cerr << "User with file descriptor = '" << fd << "' not found" << endl;
+}
+
+bool Server::doesChannelExists(const string &channel_name) {
+    if (count(channels.begin(), channels.end(), channel_name)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 Server::~Server() {
     delete socket;
+    delete command_handler;
+    delete message;
 }
