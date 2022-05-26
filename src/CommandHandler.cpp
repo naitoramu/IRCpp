@@ -28,6 +28,7 @@ void CommandHandler::defineAvailableCommands() {
     available_commands.emplace_back("WHO");
     available_commands.emplace_back("LIST");
     available_commands.emplace_back("NICK");
+    available_commands.emplace_back("USER");
 }
 
 void CommandHandler::handleMessage(Message *message, User *user) {
@@ -67,6 +68,10 @@ void CommandHandler::handleCommand(const string& command, string& text) {
 
         case str2int("WHO"):
             who(text);
+            break;
+
+        case str2int("QUIT"):
+            quit();
             break;
 
         default:
@@ -115,7 +120,7 @@ void CommandHandler::join(string &channel_name) {
     } else {
         if (server->doesChannelExists(channel_name)) {
             user->joinChannel(const_cast<string &>(channel_name));
-            response = "\n\n\n\n\n\nJoined to channel " + channel_name + "\n";
+            response = "Joined channel: " + channel_name + "\n";
 
         } else {
             response = "Channel " + channel_name + " does not exist\n";
@@ -130,7 +135,7 @@ void CommandHandler::leave() {
     if (user->isConnectedToChannel()) {
         string channel_name = user->getCurrentChannel();
         user->leaveChannel();
-        response = "Leaved channel: " + channel_name + "\n";
+        response = "Channel " + channel_name + " left\n";
     } else {
         response = "You have not joined any channel\n";
     }
@@ -153,44 +158,55 @@ void CommandHandler::who(string channel_name) {
         }
 
         if (server->doesChannelExists(channel_name)) {
-            if (user->isConnectedToChannel()) {
-                response = server->getConnectedToChannelUserNickames(user->getCurrentChannel());
-            } else {
-                response = server->getConnectedToChannelUserNickames(channel_name);
-            }
+            response = server->getConnectedToChannelUserNickames(channel_name);
+
         } else {
             response = "Channel " + channel_name + " does not exist\n";
         }
 
     } else {
-        response = server->getConnectedToServerUserNicknames();
+        if (user->isConnectedToChannel()) {
+            response = server->getConnectedToChannelUserNickames(user->getCurrentChannel());
+        } else {
+            response = server->getConnectedToServerUserNicknames();
+        }
     }
 
     sendResponse();
 }
 
+void CommandHandler::quit() {
+    response = "SEE YOU\n";
+
+    sendResponse();
+
+    server->removeDissconnectedClient(user->poll_fd.fd);
+}
+
 void CommandHandler::sendResponse() {
+
+    response = SPLITTER + response + SPLITTER;
+
     int send_value = send(user->poll_fd.fd,
                           response.c_str(),
                           response.length(),
                           0);
     if (send_value < 0) {
-        cerr << "Error while sending:" << strerror(errno) << endl;
+        cerr << "Error while sending response:" << strerror(errno) << endl;
     }
 
-    response = "";
+    response.clear();
 }
 
-void CommandHandler::sendResponse(int &file_descriptor) {
+void CommandHandler::sendMessage(int &file_descriptor) {
     int send_value = send(file_descriptor,
                           response.c_str(),
                           response.length(),
                           0);
     if (send_value < 0) {
-        cerr << "Error while sending:" << strerror(errno) << endl;
+        cerr << "Error while sending message:" << strerror(errno) << endl;
     }
 
-    response = "";
 }
 
 void CommandHandler::pass(const string& text) {
@@ -199,7 +215,9 @@ void CommandHandler::pass(const string& text) {
     } else {
         response = "Invalid command\n"
                    "To send messages you need to join channel\n"
-                   "To list available channels type 'LIST'\n";
+                   "To get HELP type 'LIST'\n";
+
+        sendResponse();
     }
 }
 
@@ -210,9 +228,12 @@ void CommandHandler::forwardMessageToUsersOnSameChannel(const string &channel_na
 
     for (int file_descriptor : *file_descriptors) {
         if (file_descriptor != user->poll_fd.fd) {
-            sendResponse(file_descriptor);
+            cout << "Forwarding to fd: " << file_descriptor << endl;
+            sendMessage(file_descriptor);
         }
     }
+
+    response.clear();
     delete file_descriptors;
 }
 

@@ -26,6 +26,8 @@ public:
 
     static vector<string> available_commands;
 
+    void removeDissconnectedClient(int &);
+
     bool doesChannelExists(const string &);
 
     string getConnectedToChannelUserNickames(const string &);
@@ -35,6 +37,9 @@ public:
     vector<int> *getUserOnChannelFileDescriptors(const string &);
 
 private:
+    const int IP_STRING_LENGTH = INET_ADDRSTRLEN;
+    const id_t INACTIVITY_TIMEOUT = 10;
+
     Socket *socket;
     Message *message;
     CommandHandler *command_handler;
@@ -42,12 +47,7 @@ private:
     vector<unique_ptr<User>> connected_users;
     vector<string> channels;
 
-    const int IP_STRING_LENGTH = INET_ADDRSTRLEN;
-    const id_t INACTIVITY_TIMEOUT = 10;
-
     User * getUserByFD(int);
-
-    void removeDissconnectedClient(int &);
 
     void removeDisconnectedFileDescriptor(int &fd);
 

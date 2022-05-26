@@ -5,7 +5,6 @@
 using namespace std;
 
 User::User(pollfd poll_fd) : ID(id_counter++) {
-    cout << "User(pollfd poll_fd) used" << endl;
     this->poll_fd = poll_fd;
 }
 

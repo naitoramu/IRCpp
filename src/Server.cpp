@@ -87,7 +87,7 @@ void Server::handleClients() {
 
                     message->parseMessage(buffer);
                     User *user = getUserByFD(poll_fd.fd);
-                    message->displayParsedMessage();
+//                    message->displayParsedMessage();
 //                    user->handleMessage(message);
                     command_handler->handleMessage(message, user);
 //                    cout << buffer << endl;
@@ -103,10 +103,10 @@ void Server::handleClients() {
 // getters
 
 string Server::getConnectedToServerUserNicknames() {
-    string nicknames = "";
+    string nicknames = "Online on the server:\n\n";
 
     if(connected_users.size() == 1) {
-        return "Just you";
+        return "Just you\n";
     }
 
     for (auto & connected_user : connected_users) {
@@ -117,23 +117,25 @@ string Server::getConnectedToServerUserNicknames() {
 }
 
 string Server::getConnectedToChannelUserNickames(const string &channel_name) {
-    string nicknames;
+    string nicknames = "Online on " + channel_name + ":\n\n";
+    int user_counter = 0;
 
     for (auto & connected_user : connected_users) {
         if (connected_user->getCurrentChannel() == channel_name) {
             nicknames += (connected_user->getNickname() + '\n');
+            user_counter++;
         }
     }
 
-    if(nicknames.empty()) {
-        return "This channel is empty";
+    if(!user_counter) {
+        nicknames = "Nobody online on " + channel_name + "\n";
     }
 
     return nicknames;
 }
 
 string Server::getChannelNames() {
-    string channel_names;
+    string channel_names = "Available channels:\n\n";
     for(string &channel_name : channels) {
         channel_names += channel_name + "\n";
     }
@@ -143,8 +145,11 @@ string Server::getChannelNames() {
 vector<int> *Server::getUserOnChannelFileDescriptors(const string &channel_name) {
     vector<int> *file_descriptors = new vector<int>;
 
+    cout << "Users on " << channel_name << ":" << endl;
+
     for(unique_ptr<User> &user : connected_users) {
         if (user->getCurrentChannel() == channel_name) {
+            cout << user->getNickname() << endl;
             file_descriptors->push_back(user->poll_fd.fd);
         }
     }
@@ -152,10 +157,8 @@ vector<int> *Server::getUserOnChannelFileDescriptors(const string &channel_name)
 }
 
 User * Server::getUserByFD(int file_descriptor) {
-    cout << "Connected users: " << connected_users.size() << endl;
 
     for (auto & connected_user : connected_users) {
-        cout << "user.poll_fd.fd = " << connected_user->poll_fd.fd << endl;
         if (connected_user->poll_fd.fd == file_descriptor) { return connected_user.get(); }
     }
 
