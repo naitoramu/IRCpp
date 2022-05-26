@@ -8,27 +8,13 @@ User::User(pollfd poll_fd) : ID(id_counter++) {
     this->poll_fd = poll_fd;
 }
 
-// setters
-void User::setNickname(string nickname) {
-    this->nickname = nickname;
-}
-
-// getters
-string User::getNickname() {
-    return nickname;
-}
-
-unsigned int User::getID() const {
-    return ID;
-}
-
 void User::joinChannel(string &channel_name) {
-    current_channel = channel_name;
+    current_channel_name = channel_name;
     connected_to_channel = true;
 }
 
 void User::leaveChannel() {
-    current_channel = "NULL";
+    current_channel_name = "NULL";
     connected_to_channel = false;
 }
 
@@ -36,8 +22,20 @@ bool User::isConnectedToChannel() {
     return connected_to_channel;
 }
 
-const string &User::getCurrentChannel() const {
-    return current_channel;
+
+// getters
+string User::getNickname() {
+    return nickname;
 }
 
+const string &User::getCurrentChannelName() const {
+    return current_channel_name;
+}
+
+// setters
+void User::setNickname(string nickname) {
+    this->nickname = nickname;
+}
+
+// destructor
 User::~User() = default;

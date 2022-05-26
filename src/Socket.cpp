@@ -1,7 +1,3 @@
-//
-// Created by kuba on 5/23/22.
-//
-
 #include "Socket.hpp"
 #include <fcntl.h>
 #include <string.h>
@@ -56,7 +52,7 @@ void Socket::bindSc() {
     socket_address->sin_addr.s_addr = ALLOWED_IP;
     socket_address->sin_port = htons(PORT);
 
-    int status = bind(*socket_fd, (struct sockaddr*)socket_address, sizeof(*socket_address));
+    int status = bind(*socket_fd, (struct sockaddr *) socket_address, sizeof(*socket_address));
 
     if (status < 0) {
         cerr << "Failed to bind to port '" << PORT << "'. Error: " << strerror(errno) << endl;
@@ -94,6 +90,7 @@ sockaddr_in *Socket::getSockAddrIn() {
     return socket_address;
 }
 
+// destructor
 Socket::~Socket() {
     delete socket_fd;
     delete socket_address;

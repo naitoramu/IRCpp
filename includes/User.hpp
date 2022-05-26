@@ -11,33 +11,35 @@
 using namespace std;
 
 class Message;
+
 class CommandHandler;
 
 class User {
 public:
     pollfd poll_fd{};
-
-    explicit User(pollfd);
-    ~User();
-
-    unsigned int getID() const;
-    string getNickname();
-
-    void setNickname(string);
-    void joinChannel(string &);
-    void leaveChannel();
-
-    bool isConnectedToChannel();
-
     static unsigned int id_counter;
 
 private:
     const unsigned int ID;
-
-    string nickname = "";
+    string nickname;
+    string current_channel_name;
     bool connected_to_channel = false;
-    string current_channel = "NULL";
+
 public:
-    const string &getCurrentChannel() const;
+    explicit User(pollfd);
+
+    ~User();
+
+    void setNickname(string);
+
+    void joinChannel(string &);
+
+    void leaveChannel();
+
+    bool isConnectedToChannel();
+
+    string getNickname();
+
+    const string &getCurrentChannelName() const;
 
 };

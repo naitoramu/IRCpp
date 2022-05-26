@@ -15,23 +15,30 @@ struct parsedLine {
 };
 
 class Message {
-public:
-    Message(CommandHandler *);
-    ~Message();
-
-    void parseMessage(string);
-    void displayParsedMessage();
-    void handleMessage();
-
-    vector<parsedLine> getParsedMessage();
 
 private:
+
     CommandHandler *command_handler;
     string message;
     vector<string> splitted_message;
     vector<parsedLine> parsed_message;
 
+public:
+
+    Message(CommandHandler *);
+
+    ~Message();
+
+    void parseMessage(string);
+
+    vector<parsedLine> getParsedMessage();
+
+private:
+
     void processMessage();
+
     void splitMessageByLines();
+
     void parse();
+
 };

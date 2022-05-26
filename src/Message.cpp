@@ -1,9 +1,7 @@
 #include "Message.hpp"
-#include "Server.hpp"
 
 #include <sstream>
 #include <iostream>
-#include <utility>
 
 Message::Message(CommandHandler *command_handler) {
     this->command_handler = command_handler;
@@ -11,7 +9,6 @@ Message::Message(CommandHandler *command_handler) {
 
 void Message::parseMessage(string message) {
     this->message = message;
-//    cout << "Message: " << message << endl;
 
     processMessage();
 }
@@ -27,7 +24,7 @@ void Message::splitMessageByLines() {
     stringstream ss(message);
     string line;
 
-    while(getline(ss, line, '\n')) {
+    while (getline(ss, line, '\n')) {
         splitted_message.push_back(line);
     }
 
@@ -36,9 +33,11 @@ void Message::splitMessageByLines() {
 void Message::parse() {
     parsed_message.clear();
     parsedLine parsed_line;
-    for (string& line : splitted_message) {
+    for (string &line: splitted_message) {
+
         parsed_line.command.clear();
         parsed_line.text.clear();
+
         if (!line.empty()) {
 
             string::size_type pos = line.find(' ');
@@ -57,19 +56,14 @@ void Message::parse() {
                 }
             } else if (command_handler->isValidCommand(line)) {
                 parsed_line.command = line;
+
             } else {
                 parsed_line.text = line;
+
             }
             parsed_message.push_back(parsed_line);
-        }
-    }
-}
 
-void Message::displayParsedMessage() {
-    int line_counter = 0;
-    for (const parsedLine& parsed_line : parsed_message) {
-        cout << line_counter << ". " << parsed_line.command << " <" << parsed_line.text << ">" << endl;
-        line_counter++;
+        }
     }
 }
 
@@ -78,4 +72,5 @@ vector<parsedLine> Message::getParsedMessage() {
     return parsed_message;
 }
 
+// destructor
 Message::~Message() = default;
