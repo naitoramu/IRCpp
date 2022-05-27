@@ -120,14 +120,23 @@ void CommandHandler::quit() {
 void CommandHandler::nick(const string &nickname) {
 
     if (nickname.empty()) {
-        response = "Invalid nickname\n";
+        if (user->getNickname().empty()) {
+            response = "Invalid nickname\n";
+
+        } else {
+            response = "Your nickname: " + user->getNickname() + "\n";
+
+        }
     } else {
         if (user->getNickname().empty()) {
             user->setNickname(nickname);
+
         } else {
             response = "Nickname already set\n";
+
         }
         response = response + "Your nickname: " + user->getNickname() + "\n";
+
     }
 
     sendResponse();
@@ -142,7 +151,7 @@ void CommandHandler::join(string &channel_name) {
 
     if (user->isConnectedToChannel()) {
         response = "You are already connected to channel " + user->getCurrentChannelName() + "\n"
-                   "To join other channel first LEAVE current channel\n";
+                                                                                             "To join other channel first LEAVE current channel\n";
 
     } else {
         if (server->channelExists(channel_name)) {
@@ -168,8 +177,10 @@ void CommandHandler::leave() {
         response = "Channel " + channel_name + " left\n";
         message = SPLITTER + user->getNickname() + " left the channel\n" + SPLITTER;
         forwardMessageToUsersOnSameChannel(channel_name);
+
     } else {
         response = "You have not joined any channel\n";
+
     }
 
     sendResponse();
@@ -208,10 +219,11 @@ void CommandHandler::pass(const string &text) {
     if (user->isConnectedToChannel()) {
         message = user->getNickname() + ": " + text;
         forwardMessageToUsersOnSameChannel(user->getCurrentChannelName());
+
     } else {
         response = "Invalid command\n"
                    "To send messages you need to join channel\n"
-                   "To get HELP type 'LIST'\n";
+                   "To get some help type 'HELP'\n";
 
         sendResponse();
     }

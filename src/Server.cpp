@@ -75,10 +75,7 @@ void Server::handleWaitingClients() {
                                       0);
 
             if (received_value < 0) {
-                if (errno != EWOULDBLOCK) {
-                    cerr << "Error while reading. Error:" << strerror(errno) << endl;
-
-                }
+                cerr << "Error while reading. Error:" << strerror(errno) << endl;
 
             } else if (received_value == 0) {
                 cerr << "Conection closed by client" << endl;

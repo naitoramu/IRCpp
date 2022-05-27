@@ -65,6 +65,15 @@ void Message::parse() {
 
         }
     }
+    displayParsedMessage();
+}
+
+void Message::displayParsedMessage() {
+    int line_counter = 0;
+    for (const parsedLine& parsed_line : parsed_message) {
+        cout << line_counter << ". " << parsed_line.command << " <" << parsed_line.text << ">" << endl;
+        line_counter++;
+    }
 }
 
 // getters

@@ -41,4 +41,5 @@ private:
 
     void parse();
 
+    void displayParsedMessage();
 };

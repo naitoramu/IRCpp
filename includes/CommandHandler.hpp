@@ -21,7 +21,7 @@ private:
     string message;
     vector<string> available_commands;
 
-    const string SPLITTER = "\n################################\n\n";
+    const string SPLITTER = "################################\n";
 
     const string HELLO_RESPONSE = "Welcome on IRCpp server\n"
                                   "To start chatting join a channel\n"
@@ -29,12 +29,12 @@ private:
 
     const string HELP_RESPONSE = "Available commands:\n\n"
                                  "HELP                      display this help\n"
-                                 "JOI N <#channel>           join to channel\n"
+                                 "JOI N <#channel>          join to channel\n"
                                  "LIST                      list available channels\n"
                                  "LEAVE                     leave current channel\n"
                                  "WHO                       list online users on server\n"
                                  "WHO <#channel>            list online users on chosen channel\n"
-                                 "QUI T                      quit from server\n";
+                                 "QUI T                     quit from server\n";
 
 public:
 
